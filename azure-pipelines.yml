@@ -1,37 +1,43 @@
 trigger:
 - main
 
-pool:
-  vmImage: 'windows-latest'
-
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  artifactName: 'drop'
+  packageFile: 'WebApp.zip'
 
-steps:
-- task: NuGetToolInstaller@1
+stages:
+# ---------------- CI Stage ----------------
+- stage: BuildAndTest
+  displayName: 'Compilar y Probar'
+  jobs:
+  - job: Build
+    displayName: 'Compilar solución y ejecutar tests'
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: NuGetToolInstaller@1
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '6.0.x'  # Actualizado desde 3.1.x
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    clean: true
+    - task: NuGetCommand@2
+      inputs:
+        restoreSolution: '$(solution)'
 
-# CORREGIDO: Usar SDK de .NET, no runtime
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '3.1.x'   
-    installationPath: $(Agent.ToolsDirectory)/dotnet
+    - task: VSBuild@1
+      inputs:
+        solution: '$(solution)'
+        msbuildArgs: >
+          /p:DeployOnBuild=true 
+          /p:WebPublishMethod=Package 
+          /p:PackageAsSingleFile=true 
+          /p:SkipInvalidConfigurations=true 
+          /p:DesktopBuildPackageLocation="$(Build.ArtifactStagingDirectory)\$(packageFile)" 
+          /p:DeployIisAppPa
 
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+
