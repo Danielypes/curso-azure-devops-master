@@ -64,28 +64,30 @@ stages:
   dependsOn: BuildAndTest
   condition: succeeded()
   jobs:
-  - deployment: DeployToVM
-    displayName: 'Desplegar a máquina con IIS'
-    environment:
-      name: 'Proyecto'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - download: current
-            artifact: $(artifactName)
- 
-          - task: PowerShell@2
-            displayName: 'Descomprimir y desplegar en IIS'
-            inputs:
-              targetType: 'inline'
-              script: |
-                $zipPath = "$(Pipeline.Workspace)\$(artifactName)\$(packageFile)"
-                $outputPath = "C:\inetpub\wwwroot\WebApp"
- 
-                if (Test-Path $outputPath) {
-                  Remove-Item -Recurse -Force $outputPath
-                }
- 
-                Expand-Archive -Path $zipPath -DestinationPath $outputPath
-                Write-Host "✅ Aplicación desplegada en IIS en $outputPath"
+    - deployment: DeployToVM
+      displayName: 'Desplegar a máquina con IIS'
+      environment:
+        name: 'Proyecto'
+      pool:
+        vmImage: 'windows-latest'  # CORREGIDO
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - download: current  # CORREGIDO
+                artifact: drop
+
+              - task: PowerShell@2
+                displayName: 'Descomprimir y desplegar en IIS'
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    $zipPath = "$(Pipeline.Workspace)\drop\WebApp.zip"
+                    $outputPath = "C:\inetpub\wwwroot\WebApp"
+
+                    if (Test-Path $outputPath) {
+                      Remove-Item -Recurse -Force $outputPath
+                    }
+
+                    Expand-Archive -Path $zipPath -DestinationPath $outputPath
+                    Write-Host "✅ Aplicación desplegada en IIS en $outputPath"
