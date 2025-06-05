@@ -1,13 +1,13 @@
 trigger:
 - main
-
+ 
 variables:
   solution: '**/KodotiAzureDevOpsProject_clean.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   artifactName: 'drop'
   packageFile: 'WebApp.zip'
-
+ 
 stages:
 # ---------------- CI Stage ----------------
 - stage: BuildAndTest
@@ -19,16 +19,16 @@ stages:
       vmImage: 'windows-latest'
     steps:
     - task: NuGetToolInstaller@1
-
+ 
     - task: UseDotNet@2
       inputs:
         packageType: 'sdk'
         version: '6.0.x'  # Asegúrate que tu código es compatible
-
+ 
     - task: NuGetCommand@2
       inputs:
         restoreSolution: '$(solution)'
-
+ 
     - task: VSBuild@1
       inputs:
         solution: '$(solution)'
@@ -42,7 +42,7 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
         clean: true
-
+ 
     - task: VSTest@2
       displayName: 'Ejecutar pruebas unitarias'
       inputs:
@@ -51,17 +51,13 @@ stages:
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
         searchFolder: '$(System.DefaultWorkingDirectory)'
-
+ 
     - task: PublishBuildArtifacts@1
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'd- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container''
+        ArtifactName: '$(artifactName)'
         publishLocation: 'Container'
-
+ 
 # ---------------- CD Stage ----------------
 - stage: Deploy
   displayName: 'Desplegar en entorno Proyecto'
@@ -78,7 +74,7 @@ stages:
           steps:
           - download: current
             artifact: $(artifactName)
-
+ 
           - task: PowerShell@2
             displayName: 'Descomprimir y desplegar en IIS'
             inputs:
@@ -86,10 +82,10 @@ stages:
               script: |
                 $zipPath = "$(Pipeline.Workspace)\$(artifactName)\$(packageFile)"
                 $outputPath = "C:\inetpub\wwwroot\WebApp"
-
+ 
                 if (Test-Path $outputPath) {
                   Remove-Item -Recurse -Force $outputPath
                 }
-
+ 
                 Expand-Archive -Path $zipPath -DestinationPath $outputPath
                 Write-Host "✅ Aplicación desplegada en IIS en $outputPath"
