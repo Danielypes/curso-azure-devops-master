@@ -2,7 +2,7 @@ trigger:
 - main
 
 variables:
-  solution: '**/KodotiAzureDevOpsProject_clean.sln'
+  solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   artifactName: 'drop'
@@ -23,7 +23,7 @@ stages:
     - task: UseDotNet@2
       inputs:
         packageType: 'sdk'
-        version: '6.0.x'  # Asegúrate que tu código es compatible
+        version: '6.0.x'
 
     - task: NuGetCommand@2
       inputs:
@@ -46,11 +46,9 @@ stages:
     - task: VSTest@2
       displayName: 'Ejecutar pruebas unitarias'
       inputs:
-        testAssemblyVer2: |
-          **\bin\$(buildConfiguration)\net6.0\KodotiAzureDevOps.Tests.dll
+        testAssemblyVer2: '**\KodotiAzureDevOps.Tests.dll'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
-        searchFolder: '$(System.DefaultWorkingDirectory)'
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -73,14 +71,14 @@ stages:
         deploy:
           steps:
           - download: current
-            artifact: $(artifactName)
+            artifact: drop
 
           - task: PowerShell@2
             displayName: 'Descomprimir y desplegar en IIS'
             inputs:
               targetType: 'inline'
               script: |
-                $zipPath = "$(Pipeline.Workspace)\$(artifactName)\$(packageFile)"
+                $zipPath = "$(Pipeline.Workspace)\drop\$(packageFile)"
                 $outputPath = "C:\inetpub\wwwroot\WebApp"
 
                 if (Test-Path $outputPath) {
