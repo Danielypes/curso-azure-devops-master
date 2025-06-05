@@ -2,7 +2,7 @@ trigger:
 - main
 
 variables:
-  solution: '**/*.sln'
+  solution: '**/KodotiAzureDevOpsProject_clean.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
   artifactName: 'drop'
@@ -46,9 +46,11 @@ stages:
     - task: VSTest@2
       displayName: 'Ejecutar pruebas unitarias'
       inputs:
-        testAssemblyVer2: '**\KodotiAzureDevOps.Tests.dll'
+        testAssemblyVer2: |
+          **\bin\$(buildConfiguration)\net6.0\KodotiAzureDevOps.Tests.dll
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
+        searchFolder: '$(System.DefaultWorkingDirectory)'
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -87,4 +89,3 @@ stages:
 
                 Expand-Archive -Path $zipPath -DestinationPath $outputPath
                 Write-Host "✅ Aplicación desplegada en IIS en $outputPath"
-
